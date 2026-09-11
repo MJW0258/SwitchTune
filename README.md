@@ -77,12 +77,6 @@ Use environment variables and local configuration files for credentials and exte
 
 SwitchTune is an actively developed research prototype. The workflow has been validated on a CheY two-state design task and is being extended toward larger-scale agentic evidence analysis and experimental design support.
 
-## 中文简介
-
-SwitchTune 是一个面向变构蛋白和构象开关蛋白的自然语言驱动智能体框架，用于设计稳定目标构象、同时尽量保留构象切换能力的突变体。系统以 Biomni 为智能体底座，通过模块化 MCP tools 串联构象偏置打分、模板约束结构预测、pLDDT/PAE 质控、逆折叠模型验证、BioEmu 构象采样、Rosetta 能量评估和多证据候选排序。
-
-当前公开仓库首先提供项目说明和 workflow 模式图；代码、运行配置和实验数据将在完成脱敏、依赖整理和发布许可确认后逐步加入。
-
 ## Contact and contributions
 
 Issues and discussions are welcome after the first implementation release. Please do not upload credentials, private datasets, or unpublished experimental results to the repository.
