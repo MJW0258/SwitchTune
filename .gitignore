@@ -1,0 +1,38 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Generated workflow outputs
+SwitchTune_runs/
+runs/
+outputs/
+logs/
+*.log
+*.jsonl
+
+# Local structures and model artifacts
+*.pdb
+*.cif
+*.mmcif
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# Python and editor artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+.idea/
+.vscode/
+
+# Keep the public project figure
+!assets/
+!assets/**
