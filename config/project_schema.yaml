@@ -1,0 +1,46 @@
+required_inputs:
+  project_name:
+    type: string
+    description: "Unique project/run name."
+  protein_name:
+    type: string
+  sequence:
+    type: fasta_or_string
+  target_state_structure:
+    type: pdb_or_cif_path
+  reference_state_structure:
+    type: pdb_or_cif_path
+  target_state_name:
+    type: string
+  reference_state_name:
+    type: string
+  design_objective:
+    type: string
+
+agent_decided_inputs:
+  mutation_region:
+    type: residue_range_or_list
+    policy: "selected after inspection of both supplied wild-type states"
+    examples:
+      - "220-230,240-250"
+      - "519,523,530"
+    record:
+      - structural rationale
+      - excluded regions
+      - selected candidate budget
+
+recommended_inputs:
+  parse_chains:
+    type: chain_list
+    default: "A"
+  first_residue_number:
+    type: integer
+    default: 1
+  ligand_or_cofactor:
+    type: string
+  fixed_residues:
+    type: residue_list
+  excluded_residues:
+    type: residue_list
+  residue_numbering_scheme:
+    type: string

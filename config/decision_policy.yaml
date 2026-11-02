@@ -1,0 +1,49 @@
+decision_policy:
+  stop_if_missing_required_inputs: true
+  allow_expensive_steps_without_user_confirmation: false
+  require_decision_log: true
+
+  mutation_region:
+    policy: "agent_select_after_inspection"
+    require_two_state_structural_rationale: true
+    allow_explicit_override: false
+
+  conformation_bias_selection:
+    policy: "adaptive_empirical_fraction"
+    minimum_fraction: 0.15
+    maximum_fraction: 0.70
+    fixed_score_window: false
+    fixed_count: false
+
+  downstream_candidate_budget:
+    policy: "adaptive_from_valid_pool"
+    minimum: 20
+    maximum: 30
+    formula: "clamp(ceil(2*sqrt(valid_candidate_count)), 20, 30)"
+
+  proceed_to_structure_prediction_if:
+    retained_candidates_min: 1
+    retained_candidates_max: 10000
+    require_user_confirmation: true
+
+  proceed_to_inverse_folding_if:
+    structure_prediction_complete: true
+    failed_structure_fraction_max: 0.2
+    require_user_confirmation: true
+
+  proceed_to_bioemu_if:
+    ranked_candidates_available: true
+    candidate_count_min: 1
+    candidate_count_max: 10000
+    require_user_confirmation: true
+
+  proceed_to_rosetta_if:
+    bioemu_summary_available: true
+    candidate_count_min: 1
+    candidate_count_max: 10000
+    require_user_confirmation: true
+
+  final_recommendation:
+    policy: "adaptive_20_to_30"
+    require_evidence_table: true
+    require_qc_summary: true

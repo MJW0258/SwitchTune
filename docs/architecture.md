@@ -1,30 +1,43 @@
-# SwitchTune Architecture
+# SwitchTune architecture
 
 ## Overview
 
-SwitchTune separates scientific reasoning from computational execution:
+SwitchTune separates language-level reasoning from bounded scientific execution:
 
 ```text
-Natural-language request
+Natural-language design request
         |
         v
 Biomni agent
         |
         v
-MCP tool modules
+SwitchTune MCP tools
         |
-        +--> state inspection and project setup
-        +--> mutation-library generation
-        +--> conformation-bias scoring
-        +--> structure prediction and confidence QC
-        +--> inverse-folding compatibility
-        +--> BioEmu sampling
-        +--> Rosetta energy evaluation
-        +--> evidence fusion and candidate review
+        +--> two-state inspection and autonomous region selection
+        +--> saturation-library setup
+        +--> empirical conformation-bias scoring and adaptive filtering
+        +--> template-constrained Boltz-2 structure prediction
+        +--> structure confidence and state-similarity QC
+        +--> inverse folding with ESM-IF1/MPNN models
+        +--> BioEmu ensemble sampling
+        +--> Rosetta energy analysis
+        +--> evidence fusion and adaptive recommendation
         |
         v
 Ranked candidates with evidence and decision trace
 ```
+
+## Agent boundary
+
+The agent chooses the mutation region, model mode, empirical CB retention fraction, checkpoint actions and final 20-30 candidate budget. MCP tools perform bounded operations, validate inputs and return structured evidence. Long-running jobs are prepared as manifests and can be executed or resumed outside the language-model call.
+
+## Evidence boundary
+
+Each stage records input paths, command configuration, output paths, candidate counts, quality-control status and rationale. A later stage receives the exact candidate table and evidence produced by the previous checkpoint. Missing or empty output is a blocked state, never an implicit pass.
+
+## Replaceable components
+
+The workflow does not require a single provider for the LLM or structure backend. Biomni supplies the agent runtime; users choose a supported model source and API endpoint. Boltz-2, LigandMPNN, ESM-IF1, BioEmu and Rosetta are configured independently, so an unavailable optional component can be installed or replaced without changing the workflow state schema.
 
 ## Design principles
 
@@ -46,7 +59,7 @@ Manifests, status tables, and decision logs make the workflow resumable. A compl
 
 ### Guarded autonomy
 
-The agent can inspect results, choose the next valid stage, and recommend thresholds within defined boundaries. Expensive external jobs remain subject to explicit execution policies and can be resumed after interruption.
+The agent can inspect results, choose the next valid stage, and recommend adaptive policies within defined boundaries. Expensive external jobs remain subject to explicit execution policies and can be resumed after interruption.
 
 ## Typical MCP module groups
 

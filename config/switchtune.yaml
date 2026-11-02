@@ -1,0 +1,69 @@
+workflow:
+  name: "SwitchTune"
+  full_name: "SwitchTune state-aware mutation design"
+  version: "0.2.0"
+  mode: "state_specific_screening"
+
+screening:
+  mutation_mode: "single_saturation"
+  amino_acid_alphabet: "ACDEFGHIKLMNPQRSTVWY"
+  retain_switchability: true
+  exclude_self_mutations: true
+  mutation_region_policy: "agent_selected_after_two_state_structure_inspection"
+
+conformation_biasing:
+  enabled: true
+  scorer: "LigandMPNN or ProteinMPNN score.py"
+  default_model_type: "protein_mpnn"
+  supported_model_types: ["protein_mpnn", "ligand_mpnn"]
+  scoring_mode: "single_aa_score"
+  score_formula: "delta_log_prob_state = logP(mutAA|state_structure) - logP(WTAA|state_structure)"
+  bias_formula: "bias_score = zscore(delta_log_prob_target) - zscore(delta_log_prob_reference)"
+  selection_policy: "agent_adaptive_empirical_central_fraction"
+  selection_min_fraction: 0.15
+  selection_max_fraction: 0.70
+
+structure_prediction:
+  enabled: true
+  default_engine: "boltz2_local"
+  template_mode: "target_state"
+  boltz2_use_structural_templates: true
+  boltz2_write_full_pae: true
+  boltz2_write_full_pde: true
+  require_pae: true
+  execution_policy: "local_cli_single_gpu_serial"
+
+structure_confidence_filter:
+  enabled: true
+  adaptive_pae_quantile: 0.80
+  require_target_like_when_state_similarity_available: true
+
+inverse_folding:
+  enabled: true
+  use_esm_if1: true
+  use_proteinmpnn: true
+  use_ligandmpnn_when_ligand_present: true
+  score_display: "NLL"
+  score_direction: "lower_nll_better"
+
+bioemu:
+  enabled: true
+  candidate_budget: "agent_adaptive_20_to_30"
+  candidate_budget_min: 20
+  candidate_budget_max: 30
+  num_samples_per_variant: 500
+  batch_size: 10
+
+rosetta:
+  enabled: true
+  candidate_budget: "agent_adaptive_20_to_30"
+  candidate_budget_min: 20
+  candidate_budget_max: 30
+  nstruct_relax: 5
+  interface_analyzer: true
+
+outputs:
+  keep_intermediate_files: true
+  write_manifest: true
+  write_decision_log: true
+  write_candidate_tables: true

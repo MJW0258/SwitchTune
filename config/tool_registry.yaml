@@ -1,0 +1,78 @@
+# External tools are optional and disabled until installed locally.
+# Replace every placeholder path with a real installation path.
+tools:
+  boltz2_local:
+    enabled: true
+    executable: "boltz"
+    conda_env: "current"
+    runner_script: "${SWITCHTUNE_HOME:-.}/scripts/run_boltz2_local_batch.py"
+    cache_dir: "${BOLTZ_CACHE:-./models/boltz2}"
+    use_templates: true
+    template_mode: "target_state"
+    default_recycling_steps: 1
+    default_sampling_steps: 20
+    default_diffusion_samples: 1
+    default_max_parallel_samples: 1
+    default_num_workers: 1
+    default_preprocessing_threads: 1
+    no_kernels: true
+    write_full_pae: true
+    write_full_pde: true
+    require_pae: true
+    devices: 1
+    accelerator: "gpu"
+    max_concurrency: 1
+
+  boltz2_hosted:
+    enabled: false
+    endpoint: "https://your-structure-provider.example/v1/boltz2"
+    api_key_env: "BOLTZ2_API_KEY"
+    runner_script: "${SWITCHTUNE_HOME:-.}/scripts/run_boltz2_nim_batch.py"
+    require_pae: true
+
+  ligandmpnn:
+    enabled: false
+    conda_env: "ligandmpnn"
+    repo: "${LIGANDMPNN_REPO:-./external/LigandMPNN}"
+    score_script: "${LIGANDMPNN_REPO:-./external/LigandMPNN}/score.py"
+    model_params: "${LIGANDMPNN_REPO:-./external/LigandMPNN}/model_params"
+
+  proteinmpnn:
+    enabled: false
+    conda_env: "proteinmpnn"
+    repo: "${PROTEINMPNN_REPO:-./external/ProteinMPNN}"
+    score_script: "${PROTEINMPNN_REPO:-./external/ProteinMPNN}/protein_mpnn_run.py"
+    model_params: "${PROTEINMPNN_REPO:-./external/ProteinMPNN}/vanilla_model_weights"
+
+  esm_if1:
+    enabled: false
+    conda_env: "${ESM_IF1_ENV:-esm-if1}"
+    repo: "${ESM_IF1_REPO:-./external/esm}"
+    score_script: "${ESM_IF1_SCORE_SCRIPT:-./external/esm/examples/inverse_folding/score_log_likelihoods.py}"
+
+  bioemu:
+    enabled: false
+    conda_env: "${BIOEMU_ENV:-bioemu}"
+    home: "${BIOEMU_HOME:-./external/bioemu}"
+    module: "bioemu.sample"
+
+  rosetta:
+    enabled: false
+    home: "${ROSETTA_HOME:-./external/rosetta/main}"
+    rosetta_scripts: "${ROSETTA_HOME:-./external/rosetta/main}/source/bin/rosetta_scripts.static.linuxgccrelease"
+    interface_analyzer: "${ROSETTA_HOME:-./external/rosetta/main}/source/bin/InterfaceAnalyzer.static.linuxgccrelease"
+    relax: "${ROSETTA_HOME:-./external/rosetta/main}/source/bin/relax.static.linuxgccrelease"
+    score_jd2: "${ROSETTA_HOME:-./external/rosetta/main}/source/bin/score_jd2.static.linuxgccrelease"
+    molfile_to_params: "${ROSETTA_HOME:-./external/rosetta/main}/source/scripts/python/public/molfile_to_params.py"
+
+  conformation_bias_scorer:
+    enabled: true
+    engine: "ligandmpnn_score_py"
+    supported_model_types: ["protein_mpnn", "ligand_mpnn"]
+    default_model_type: "protein_mpnn"
+    conda_env: "${LIGANDMPNN_ENV:-ligandmpnn}"
+    repo: "${LIGANDMPNN_REPO:-./external/LigandMPNN}"
+    score_script: "${LIGANDMPNN_SCORE_SCRIPT:-./external/LigandMPNN/score.py}"
+    scoring_mode: "single_aa_score"
+    formula: "bias_score = zscore(delta_log_prob_target) - zscore(delta_log_prob_reference)"
+    selection_policy: "agent_adaptive_empirical_central_fraction"

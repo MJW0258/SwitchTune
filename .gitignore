@@ -7,6 +7,8 @@
 
 # Generated workflow outputs
 SwitchTune_runs/
+test_runs/
+test_runs*/
 runs/
 outputs/
 logs/

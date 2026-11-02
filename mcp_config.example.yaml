@@ -1,0 +1,15 @@
+# SwitchTune MCP server configuration for Biomni or another MCP client.
+# All paths are resolved on the host where the MCP child starts.
+mcp_servers:
+  switchtune:
+    enabled: true
+    command: ["python", "-m", "switchtune.mcp_server"]
+    description: "SwitchTune state-aware mutation-design workflow"
+    env:
+      PYTHONPATH: "${SWITCHTUNE_HOME:-.}"
+      SWITCHTUNE_HOME: "${SWITCHTUNE_HOME:-.}"
+      SWITCHTUNE_RUNS: "${SWITCHTUNE_RUNS:-./SwitchTune_runs}"
+      SWITCHTUNE_CONFIG: "${SWITCHTUNE_CONFIG:-./config/switchtune.yaml}"
+      SWITCHTUNE_TOOL_REGISTRY: "${SWITCHTUNE_TOOL_REGISTRY:-./config/tool_registry.yaml}"
+      SWITCHTUNE_DECISION_POLICY: "${SWITCHTUNE_DECISION_POLICY:-./config/decision_policy.yaml}"
+      SWITCHTUNE_AUTONOMOUS_REGION_FALLBACK: "0"

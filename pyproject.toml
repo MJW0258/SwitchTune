@@ -1,0 +1,12 @@
+[project]
+name = "switchtune"
+version = "0.2.0"
+description = "Natural-language-driven, state-aware mutation design for conformational-switching proteins"
+requires-python = ">=3.10"
+dependencies = [
+  "mcp>=1.0.0",
+  "pyyaml>=6.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["switchtune*"]

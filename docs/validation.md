@@ -18,13 +18,13 @@ SwitchTune has been developed and tested incrementally rather than validated as 
 
 ## Development benchmark system
 
-CheY has been used as the primary two-state development system because it provides a compact receiver-domain model with experimentally characterized structural states and a well-defined switching region.
+Development runs used compact two-state proteins with experimentally characterized alternative structures. The public workflow does not depend on a case-specific protein, structure pair or predefined mutation interval.
 
-The development workflow uses:
+Each run supplies:
 
-- an activation-like target structure;
+- a target-state structure;
 - a reference structure representing the alternate state;
-- a mutation region near the conformational switching surface;
+- an agent-selected mutation region justified by the two-state comparison;
 - target-state template constraints during structure prediction;
 - multiple downstream compatibility and stability checks.
 
