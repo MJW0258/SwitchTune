@@ -4,8 +4,6 @@
 
 SwitchTune is a natural-language-driven framework for state-aware mutation design in conformational-switching proteins. It coordinates a Biomni scientific agent with modular MCP tools and records each computational decision, intermediate result and quality-control gate.
 
-The public release keeps mutation-region selection autonomous: the agent first inspects the two supplied wild-type state structures, then chooses structurally justified residue intervals. It does not require a user-specified region in the normal launcher.
-
 ## What the workflow does
 
 1. Inspect target and reference wild-type structures.
