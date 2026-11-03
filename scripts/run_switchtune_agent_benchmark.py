@@ -88,6 +88,15 @@ def read_sequence(sequence: str, sequence_file: str) -> str:
     ).upper()
 
 
+def read_design_prompt(prompt: str, prompt_file: str) -> str:
+    """Read the user's natural-language design request from text or a file."""
+    if str(prompt or "").strip():
+        return str(prompt).strip()
+    if str(prompt_file or "").strip():
+        return Path(prompt_file).expanduser().read_text(encoding="utf-8").strip()
+    return ""
+
+
 def read_json(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
@@ -420,6 +429,7 @@ def build_prompt(
     mutation_region: str,
     first_residue_number: int,
     model_type: str,
+    user_prompt: str,
     design_objective: str,
     sequence: str,
     ligand_codes: str,
@@ -455,6 +465,7 @@ parse_chains: {parse_chains}
 first_residue_number: {first_residue_number}
 {region_line}{model_line}{ligand_line}structure_engine: {structure_engine}
 cb_selection_mode: {cb_selection_mode}
+user_design_prompt: {user_prompt or "(not supplied; use the compatibility objective below)"}
 design_objective: {design_objective}
 {sequence_block}
 Formal benchmark mode:
@@ -906,6 +917,16 @@ def main() -> int:
     parser.add_argument("--parse_chains", default="A")
     parser.add_argument("--first_residue_number", type=int, default=1)
     parser.add_argument("--model_type", default="")
+    parser.add_argument(
+        "--prompt",
+        default="",
+        help="Natural-language description of the desired mutation-design task.",
+    )
+    parser.add_argument(
+        "--prompt_file",
+        default="",
+        help="UTF-8 file containing the natural-language design request.",
+    )
     parser.add_argument("--design_objective", default="")
     parser.add_argument("--sequence", default="")
     parser.add_argument("--sequence_file", default="")
@@ -1046,7 +1067,8 @@ def main() -> int:
         return 2
 
     sequence = read_sequence(args.sequence, args.sequence_file)
-    design_objective = args.design_objective or (
+    user_prompt = read_design_prompt(args.prompt, args.prompt_file)
+    design_objective = args.design_objective or user_prompt or (
         f"Design state-compatible mutations for {args.protein_name} while preserving the intended allosteric switch behavior."
     )
     target_state_name = args.target_state_name or f"{args.protein_name}_target"
@@ -1065,6 +1087,7 @@ def main() -> int:
         mutation_region="",
         first_residue_number=args.first_residue_number,
         model_type=args.model_type,
+        user_prompt=user_prompt,
         design_objective=design_objective,
         sequence=sequence,
         ligand_codes=args.ligand_codes,
@@ -1084,6 +1107,13 @@ def main() -> int:
         "resumed_existing_project": bool(args.resume_existing_project),
         "project_name": project_name,
         "prompt_path": str(prompt_path),
+        "user_prompt": user_prompt,
+        "prompt_source": (
+            "argument" if user_prompt and args.prompt
+            else "file" if user_prompt and args.prompt_file
+            else "compatibility_default"
+        ),
+        "design_objective": design_objective,
         "prepared_at": utc_now(),
     }
     write_json(invocation_path, invocation)
@@ -1248,6 +1278,19 @@ def main() -> int:
     # direct-tool path or an early setup error before invoking checkpoint
     # stages with an empty project.
     manifest_after_agent = read_json(run_dir / "project_manifest.json")
+    if manifest_after_agent and (user_prompt or args.design_objective):
+        manifest_after_agent.update(
+            {
+                "user_prompt": user_prompt,
+                "prompt_source": (
+                    "argument" if user_prompt and args.prompt
+                    else "file" if user_prompt and args.prompt_file
+                    else "compatibility_objective"
+                ),
+                "design_objective": design_objective,
+            }
+        )
+        write_json(run_dir / "project_manifest.json", manifest_after_agent)
     guard_event_log_after_agent = report_dir / "switchtune_go_guard_full_workflow_events.jsonl"
     guard_event_text_after_agent = (
         guard_event_log_after_agent.read_text(encoding="utf-8", errors="replace")
@@ -1499,6 +1542,8 @@ def main() -> int:
         "workflow": "SwitchTune formal Biomni agent benchmark",
         "parameters": {
             "protein_name": args.protein_name,
+            "user_prompt": user_prompt,
+            "design_objective": design_objective,
             "structure_engine": args.structure_engine,
             "cb_selection_mode": args.cb_selection_mode,
             "cb_score_min": args.cb_score_min,
