@@ -2,6 +2,16 @@
 
 SwitchTune reads configuration from environment variables and the YAML files in `config/`. Start from `.env.example`, then export the variables in the shell or load them with a secret manager.
 
+## Natural-language design prompt
+
+The required `prompt` input is the user's natural-language description of the mutation-design task. It should state the desired state-specific behavior and relevant experimental constraints. The agent selects the mutation region after inspecting both supplied wild-type structures, so the prompt does not need to provide a residue range.
+
+```bash
+export SWITCHTUNE_PROMPT="Reduce dark-state leakage while preserving the light-state response and reversible switching."
+```
+
+The launcher passes this value to `scripts/run_switchtune_agent_benchmark.py --prompt`. Longer requests can be stored in a UTF-8 file and supplied directly with `--prompt_file`. The legacy `--design_objective` option remains available as a compatibility alias and is used only when `prompt` is omitted.
+
 ## LLM connection
 
 ```bash

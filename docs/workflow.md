@@ -4,7 +4,7 @@ A run is a sequence of auditable checkpoints. Every stage writes a manifest, can
 
 ## Input and region selection
 
-Provide the protein name, target-state structure, reference-state structure, state labels and design objective. The agent must inspect both wild-type structures before selecting a mutation region. The target and reference labels in the user request remain authoritative; ligand clues are validation evidence rather than an automatic state swap.
+Provide the protein name, target-state structure, reference-state structure, state labels and a natural-language `prompt` describing the desired design outcome. The agent must inspect both wild-type structures before selecting a mutation region. The target and reference labels in the user request remain authoritative; ligand clues are validation evidence rather than an automatic state swap. The prompt is written to the invocation record and included in the generated agent request for auditability.
 
 ## Library and conformation bias
 
