@@ -6,6 +6,10 @@ set -euo pipefail
 : "${PROTEIN_NAME:?Set PROTEIN_NAME}"
 : "${TARGET_STATE_STRUCTURE:?Set TARGET_STATE_STRUCTURE}"
 : "${REFERENCE_STATE_STRUCTURE:?Set REFERENCE_STATE_STRUCTURE}"
+if [[ -z "${SWITCHTUNE_PROMPT:-}" && -z "${SWITCHTUNE_PROMPT_FILE:-}" ]]; then
+  echo "Set SWITCHTUNE_PROMPT or SWITCHTUNE_PROMPT_FILE (natural-language design request)." >&2
+  exit 2
+fi
 : "${SWITCHTUNE_LLM_MODEL:?Set SWITCHTUNE_LLM_MODEL}"
 : "${SWITCHTUNE_LLM_API_KEY:?Set SWITCHTUNE_LLM_API_KEY}"
 
@@ -23,6 +27,8 @@ python -u "${SWITCHTUNE_HOME}/scripts/run_switchtune_agent_benchmark.py" \
   --reference_state_structure "$REFERENCE_STATE_STRUCTURE" \
   --target_state_name "${TARGET_STATE_NAME:-target_state}" \
   --reference_state_name "${REFERENCE_STATE_NAME:-reference_state}" \
+  --prompt "${SWITCHTUNE_PROMPT:-}" \
+  --prompt_file "${SWITCHTUNE_PROMPT_FILE:-}" \
   --parse_chains "${PARSE_CHAINS:-A}" \
   --first_residue_number "${FIRST_RESIDUE_NUMBER:-1}" \
   --structure_engine "${SWITCHTUNE_STRUCTURE_ENGINE:-boltz2_local}" \
