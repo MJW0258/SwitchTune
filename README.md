@@ -81,8 +81,6 @@ export SWITCHTUNE_LLM_BASE_URL=https://your-provider.example/v1
 bash scripts/run_switchtune.sh
 ```
 
-The launcher intentionally contains no `MUTATION_REGION`. SwitchTune records the agent's selected region in `project_manifest.json` and `decision_log.jsonl`.
-
 `SWITCHTUNE_PROMPT` (or `SWITCHTUNE_PROMPT_FILE`) is the required natural-language design request. It describes the desired state-specific behavior and constraints; the agent interprets it together with the supplied structures. For a longer request, set `SWITCHTUNE_PROMPT_FILE=/path/to/design_request.md` in the launcher or pass `--prompt_file` to the Python runner.
 
 For a provider with a native Biomni integration, set `SWITCHTUNE_LLM_SOURCE` to the corresponding Biomni source and omit `SWITCHTUNE_LLM_BASE_URL` when it is not needed. For an OpenAI-compatible endpoint, use `Custom` and provide its base URL.
