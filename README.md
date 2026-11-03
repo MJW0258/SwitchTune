@@ -21,15 +21,35 @@ The candidate budget is calculated from the valid evidence pool and is never fix
 
 ## Repository layout
 
-- `switchtune/`: MCP server and Biomni integration helpers.
-- `scripts/run_switchtune_agent_benchmark.py`: checkpointed workflow runner.
-- `scripts/run_switchtune.sh`: minimal server launcher.
-- `config/`: portable workflow, tool and decision-policy templates.
-- `docs/installation.md`: environment setup and external-model deployment.
-- `docs/configuration.md`: API, paths and model settings.
-- `docs/workflow.md`: autonomous region selection and adaptive ranking.
-- `prompts/switchtune_agent_prompt.md`: reusable agent instructions.
-- `assets/switchtune-workflow.png`: workflow overview.
+- `switchtune/mcp_server.py`: MCP tools for structure inspection, library generation, state-specific scoring, structure prediction, inverse folding, ensemble sampling, energy evaluation and evidence fusion.
+- `switchtune/biomni_go_guard.py`: guarded Biomni handoff and checkpoint enforcement.
+- `switchtune/biomni_mcp_adapter.py`: normalization layer between Biomni tool calls and SwitchTune MCP results.
+- `switchtune/__init__.py`: package metadata and public import surface.
+- `scripts/run_switchtune_agent_benchmark.py`: checkpointed agent runner that accepts the user's natural-language design prompt.
+- `scripts/run_switchtune.sh`: minimal environment-variable launcher for a complete run.
+- `scripts/checkpoint_workflow_runner.py`: resumable downstream checkpoint execution and review.
+- `scripts/biomni_runtime.py`: Biomni agent construction and review-session utilities.
+- `scripts/run_boltz2_local_batch.py`: local Boltz-2 batch execution helper.
+- `scripts/run_boltz2_nim_batch.py`: hosted Boltz-2/NIM batch execution helper.
+- `config/project_schema.yaml`: required inputs, including the natural-language `prompt`, and agent-decided fields.
+- `config/switchtune.yaml`: default workflow and external-tool settings.
+- `config/tool_registry.yaml`: executable names, paths and model backends.
+- `config/decision_policy.yaml`: autonomous region, adaptive filtering and candidate-budget policies.
+- `docs/installation.md`: environment setup and deployment instructions for Biomni and external models.
+- `docs/configuration.md`: provider credentials, paths, prompt input and model settings.
+- `docs/workflow.md`: checkpoint sequence, autonomous region selection and adaptive ranking behavior.
+- `docs/architecture.md`: component boundaries and data flow.
+- `docs/validation.md`: validation commands and expected checks.
+- `prompts/switchtune_agent_prompt.md`: reusable blind-test agent instructions.
+- `prompts/switchtune_agent_review_prompt.md`: checkpoint and final-review instructions.
+- `assets/switchtune-workflow.png`: workflow overview figure.
+- `mcp_config.example.yaml`: example MCP client registration.
+- `.env.example`: template for user-supplied credentials and local model paths.
+- `requirements.txt`: minimal Python dependencies.
+- `pyproject.toml`: package metadata and tooling configuration.
+- `tests/test_mcp_tools.py`: MCP tool contract tests.
+- `tests/test_adaptive_cb_selection_to_structure_prediction.py`: adaptive filtering and handoff tests.
+- `tests/test_structure_engine_selection_and_boltz_job.py`: structure-engine and Boltz-2 job tests.
 
 ## Quick start
 
@@ -53,6 +73,7 @@ export TARGET_STATE_STRUCTURE=/data/target_state.pdb
 export REFERENCE_STATE_STRUCTURE=/data/reference_state.pdb
 export TARGET_STATE_NAME=target_state
 export REFERENCE_STATE_NAME=reference_state
+export SWITCHTUNE_PROMPT="Design mutations that favor the target state while preserving reversible switching."
 export SWITCHTUNE_LLM_MODEL=your-model-id
 export SWITCHTUNE_LLM_API_KEY='your_api_key'
 export SWITCHTUNE_LLM_SOURCE=Custom
@@ -61,6 +82,8 @@ bash scripts/run_switchtune.sh
 ```
 
 The launcher intentionally contains no `MUTATION_REGION`. SwitchTune records the agent's selected region in `project_manifest.json` and `decision_log.jsonl`.
+
+`SWITCHTUNE_PROMPT` (or `SWITCHTUNE_PROMPT_FILE`) is the required natural-language design request. It describes the desired state-specific behavior and constraints; the agent interprets it together with the supplied structures. For a longer request, set `SWITCHTUNE_PROMPT_FILE=/path/to/design_request.md` in the launcher or pass `--prompt_file` to the Python runner.
 
 For a provider with a native Biomni integration, set `SWITCHTUNE_LLM_SOURCE` to the corresponding Biomni source and omit `SWITCHTUNE_LLM_BASE_URL` when it is not needed. For an OpenAI-compatible endpoint, use `Custom` and provide its base URL.
 
