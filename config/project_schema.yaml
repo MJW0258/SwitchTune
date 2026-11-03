@@ -14,8 +14,14 @@ required_inputs:
     type: string
   reference_state_name:
     type: string
+  prompt:
+    type: natural_language
+    description: "User-authored natural-language description of the desired design task and state-specific objective."
+
+optional_inputs:
   design_objective:
     type: string
+    description: "Compatibility alias for prompt; derived from prompt when omitted."
 
 agent_decided_inputs:
   mutation_region:
