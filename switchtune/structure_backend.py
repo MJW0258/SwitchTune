@@ -1,3 +1,4 @@
+# Resolve deployment-specific predictor settings.
 """Deployment-time structure backend choice, shared by CLI and MCP processes."""
 
 from __future__ import annotations
