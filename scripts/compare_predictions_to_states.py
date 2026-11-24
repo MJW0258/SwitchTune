@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Align predictions and compare functional states.
 from __future__ import annotations
 
 import argparse
