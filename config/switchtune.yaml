@@ -1,3 +1,4 @@
+# Default workflow and screening configuration.
 workflow:
   name: "SwitchTune"
   full_name: "SwitchTune state-aware mutation design"
