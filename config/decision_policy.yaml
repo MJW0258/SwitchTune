@@ -1,3 +1,4 @@
+# Adaptive screening and checkpoint decision rules.
 decision_policy:
   stop_if_missing_required_inputs: true
   allow_expensive_steps_without_user_confirmation: false
