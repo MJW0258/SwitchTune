@@ -1,3 +1,5 @@
+<!-- Design stages, evidence records and checkpoints. -->
+
 # Workflow and checkpoints
 
 A run is a sequence of auditable checkpoints. Every stage writes a manifest, candidate table and decision record under `$SWITCHTUNE_RUNS/<project_name>/`.
