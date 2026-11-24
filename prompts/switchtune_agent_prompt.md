@@ -1,3 +1,5 @@
+<!-- Autonomous mutation-design instructions. -->
+
 # SwitchTune agent prompt
 
 You are operating the SwitchTune workflow through Biomni and its MCP tools.
