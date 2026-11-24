@@ -1,3 +1,4 @@
+# Test AlphaFold3 inputs, outputs and resume handling.
 """Adapter/integration tests with synthetic AF3 artifacts, without model inference."""
 # ruff: noqa: E402 -- Add the repository root before importing the local package.
 
