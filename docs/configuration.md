@@ -1,3 +1,5 @@
+<!-- API, model and workflow configuration guide. -->
+
 # Configuration
 
 SwitchTune reads configuration from environment variables and the YAML files in `config/`. Start from `.env.example`, then export the variables in the shell or load them with a secret manager.
