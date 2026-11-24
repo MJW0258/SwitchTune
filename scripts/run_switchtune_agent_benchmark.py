@@ -32,6 +32,8 @@ if str(REPO) not in sys.path:
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
+from switchtune.structure_backend import configured_engine
+
 
 BIOEMU_METRIC_FIELDS = (
     "bioemu_sample_count",
@@ -385,7 +387,7 @@ def configure_environment() -> None:
     os.environ.setdefault("SWITCHTUNE_CONFIG", str(REPO / "config" / "switchtune.yaml"))
     os.environ.setdefault("SWITCHTUNE_TOOL_REGISTRY", str(REPO / "config" / "tool_registry.yaml"))
     os.environ.setdefault("SWITCHTUNE_DECISION_POLICY", str(REPO / "config" / "decision_policy.yaml"))
-    os.environ.setdefault("SWITCHTUNE_STRUCTURE_ENGINE", "boltz2_local")
+    os.environ.setdefault("SWITCHTUNE_STRUCTURE_ENGINE", configured_engine())
     # Short proteins, single-chain oligomeric proxies, and ligand-free state
     # surrogates can yield complete Boltz-2/PAE outputs below the generic
     # absolute confidence thresholds.  Keep the strict gate unchanged, but
@@ -475,7 +477,7 @@ Formal benchmark mode:
   observed score distribution and record the rationale. Do not apply a universal score
   threshold or a fixed retained count.
 - Do not use BioEmu or Rosetta budgets to set the CB retention count.
-- The checkpoint workflow will send all candidates retained by the selected CB policy to local Boltz-2 structure prediction.
+- The checkpoint workflow sends all CB-retained candidates to the deployment-selected structure predictor.
 - Let the agent choose the BioEmu and final candidate budget from the valid evidence pool.
   The adaptive budget is bounded to 20-30 candidates when that many valid variants exist.
   Use {bioemu_max_per_site} variants maximum per mutation site and the configured sample count.
@@ -486,7 +488,7 @@ Formal benchmark mode:
 - Rosetta must rank/evaluate that full set; do not use the final recommendation top-N
   as a Rosetta input filter.
 - The final recommendation top-N is applied only after Rosetta evidence is merged.
-- Keep require_pae=true, request full PAE/PDE from Boltz-2, and use the local Boltz-2 CLI with the target-state structure as template.
+- Keep require_pae=true and the selected structure_engine. Use its native input/output adapter and the target-state template. Request full PAE (and PDE for Boltz-2).
 
 Mandatory blind-test policy:
 - This is a blind benchmark. During candidate generation, mutation-region selection,
@@ -931,7 +933,7 @@ def main() -> int:
     parser.add_argument("--sequence", default="")
     parser.add_argument("--sequence_file", default="")
     parser.add_argument("--ligand_codes", default="")
-    parser.add_argument("--structure_engine", default=os.environ.get("SWITCHTUNE_STRUCTURE_ENGINE", "boltz2_local"))
+    parser.add_argument("--structure_engine", default=configured_engine(), help="Deployment-selected predictor; an explicit value overrides the local selection for this run.")
     parser.add_argument(
         "--cb_selection_mode",
         choices=("adaptive",),
@@ -985,7 +987,7 @@ def main() -> int:
         "--reuse_existing_structure_prediction",
         action="store_true",
         help=(
-            "When resuming, skip Boltz-2 submission and rescan the existing "
+            "When resuming, skip structure inference and rescan the existing "
             "structure_prediction output directory. Valid structure+PAE files "
             "are reused; missing candidates remain failed."
         ),
@@ -1010,6 +1012,7 @@ def main() -> int:
         parser.error("--rosetta_top_n must be 0 (adaptive) or between 20 and 30.")
 
     configure_environment()
+    os.environ["SWITCHTUNE_STRUCTURE_ENGINE"] = args.structure_engine
     project_name = args.project_name.strip()
     run_dir = RUNS_ROOT / project_name
     report_dir = run_dir / "00_agent_reports"

@@ -33,7 +33,7 @@ SwitchTune is a natural-language-driven framework for state-aware mutation desig
 | --- | --- |
 | **Input and library setup** | Inspect both wild-type structures, select a mutation region and generate a saturation single-mutant library. |
 | **State-bias scoring** | Score variants in both states with ProteinMPNN or LigandMPNN and retain an adaptive, moderate-bias fraction. |
-| **Structure prediction and QC** | Predict target-state variants with Boltz-2, then assess confidence, PAE and similarity to both input states. |
+| **Structure prediction and QC** | Use your selected Boltz-2 or AlphaFold3 backend, then assess confidence, PAE and similarity to both input states. |
 | **Sequence scoring** | Validate sequence–structure compatibility with ESM-IF1 and ProteinMPNN/LigandMPNN. |
 | **Ensemble sampling** | Characterize conformational ensembles with BioEmu. |
 | **Energy scoring** | Evaluate protein or interface energetics with Rosetta. |
@@ -47,18 +47,21 @@ SwitchTune returns an adaptive shortlist of **20–30 candidates** when enough v
 
 Use Python 3.10 or newer for the orchestration layer. A Linux server with a CUDA-compatible PyTorch installation is recommended for local scientific backends; follow each model's environment requirements.
 
-### 1. Install the orchestration layer
+### 1. Choose the predictor, then install
+
+Choose **Boltz-2** or **AlphaFold3** based on server GPU memory, host RAM and available storage before installing model dependencies. The selection helper reports GPU/disk information and saves your choice for subsequent runs. AF3's full search installation can require up to 1 TB; prepared MSA inputs can omit the search databases. See the [resource comparison and installation instructions](docs/installation.md#0-choose-a-structure-predictor).
 
 ```bash
 git clone https://github.com/MJW0258/SwitchTune.git
 cd SwitchTune
+python3 scripts/configure_structure_backend.py --storage-root /data
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Follow the [installation guide](docs/installation.md) to install Biomni and the scientific backends needed for your run. The commands above install the base SwitchTune dependencies.
+Follow the [installation guide](docs/installation.md) to install Biomni, shared scientific tools and the **selected** predictor. The commands above install only the base SwitchTune dependencies. The launcher reads the saved selection, so a per-task model argument is unnecessary.
 
 Edit `.env` with the LLM provider settings and local model paths, then export those variables in the launch shell. API credentials are supplied by the user and are read from environment variables.
 
@@ -101,7 +104,7 @@ python -m switchtune.mcp_server
 | ProteinMPNN / LigandMPNN | Two-state scoring and sequence validation | [MPNN setup](docs/installation.md#2-ligandmpnn-and-proteinmpnn) |
 | ESM-IF1 | Inverse-folding validation | [ESM-IF1 setup](docs/installation.md#3-esm-if1) |
 | BioEmu | Conformational ensemble sampling | [BioEmu setup](docs/installation.md#4-bioemu) |
-| Boltz-2 | Structure prediction | [Boltz-2 setup](docs/installation.md#5-boltz-2) |
+| Boltz-2 **or** AlphaFold3 | Selectable structure prediction with native input/output adapters | [Choose a predictor](docs/installation.md#0-choose-a-structure-predictor) · [Boltz-2](docs/installation.md#5-boltz-2) · [AlphaFold3](docs/installation.md#5a-alphafold3) |
 | Rosetta | Protein and interface energy evaluation | [Rosetta setup](docs/installation.md#6-rosetta) |
 
 Backends are installed separately. Stages that depend on an unavailable component are recorded as pending or blocked. PyTorch and CUDA versions are chosen for each backend's environment.
@@ -131,6 +134,13 @@ Backends are installed separately. Stages that depend on an unavailable componen
 - `scripts/biomni_runtime.py`: Biomni agent construction and review-session utilities.
 - `scripts/run_boltz2_local_batch.py`: local Boltz-2 batch execution helper.
 - `scripts/run_boltz2_nim_batch.py`: hosted Boltz-2/NIM batch execution helper.
+- `scripts/configure_structure_backend.py`: dependency-free GPU/disk inspection and deployment-time predictor selection.
+- `scripts/run_alphafold3_batch.py`: official AlphaFold3 Docker/native execution, artifact validation and resumable batch collection.
+- `scripts/smoke_structure_backend.py`: one-control preparation or real inference check with the selected predictor.
+- `scripts/compare_predictions_to_states.py`: sequence-aligned comparison of predicted structures with both input states.
+- `scripts/extract_cb_ligandmpnn_scores.py`: external-environment CB score extraction entry point.
+- `switchtune/structure_backend.py`: shared deployment choice and AlphaFold3 settings resolution.
+- `switchtune/alphafold3.py`: native AF3 JSON/template generation and sample/metric parsing.
 - `config/project_schema.yaml`: required inputs, including the natural-language `prompt`, and agent-decided fields.
 - `config/switchtune.yaml`: default workflow and external-tool settings.
 - `config/tool_registry.yaml`: executable names, paths and model backends.
@@ -150,6 +160,7 @@ Backends are installed separately. Stages that depend on an unavailable componen
 - `tests/test_mcp_tools.py`: MCP tool contract tests.
 - `tests/test_adaptive_cb_selection_to_structure_prediction.py`: adaptive filtering and handoff tests.
 - `tests/test_structure_engine_selection_and_boltz_job.py`: structure-engine and Boltz-2 job tests.
+- `tests/test_alphafold3_backend.py`: AF3 adapter, sample validation, recovery and downstream handoff tests with synthetic outputs.
 
 </details>
 

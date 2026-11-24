@@ -1,7 +1,7 @@
 workflow:
   name: "SwitchTune"
   full_name: "SwitchTune state-aware mutation design"
-  version: "0.2.0"
+  version: "0.3.0"
   mode: "state_specific_screening"
 
 screening:
@@ -26,6 +26,8 @@ conformation_biasing:
 structure_prediction:
   enabled: true
   default_engine: "boltz2_local"
+  # Deployment selection overrides this legacy default for all ligand contexts.
+  supported_local_engines: ["boltz2_local", "alphafold3"]
   template_mode: "target_state"
   boltz2_use_structural_templates: true
   boltz2_write_full_pae: true

@@ -509,7 +509,14 @@ def _extract_timeout_seconds_from_prompt(prompt: str, default: int) -> int:
 
 
 def _extract_structure_engine_from_prompt(prompt: str) -> str:
+    from switchtune.structure_backend import deployment_config
+
+    pinned = os.environ.get("SWITCHTUNE_STRUCTURE_ENGINE") or deployment_config().get("engine")
+    if pinned and pinned != "auto":
+        return str(pinned)
     lowered = prompt.lower()
+    if any(marker in lowered for marker in ("alphafold3", "alphafold 3", "alphafold-3")) or re.search(r"\baf3\b", lowered):
+        return "alphafold3"
     local_boltz_markers = (
         "boltz2_local",
         "boltz-2 local",
@@ -1958,14 +1965,16 @@ def _auto_run_full_workflow_from_inspection(
         if valid_structure_count == 0:
             raise RuntimeError(
                 "Structure prediction produced no valid structures after the strict PAE gate. "
-                "Inspect structure_prediction_evidence.csv and the Boltz-2 response summary."
+                "Inspect structure_prediction_evidence.csv and the selected backend's prediction summary."
             )
 
+        backend_settings = structure.get("alphafold3") or structure.get("boltz2") or {}
+        prediction_chain = str(backend_settings.get("polymer_chain_id") or parse_chains)
         _workflow_progress(project_name, "standardize_structure_prediction_results")
         standardized = tools["standardize_structure_prediction_results"](
             project_name=project_name,
             structures_csv=str(collect_structure.get("output_csv") or ""),
-            chain_id=parse_chains,
+            chain_id=prediction_chain,
             require_pae=True,
         )
         report["structure_standardization"] = standardized
@@ -1983,7 +1992,7 @@ def _auto_run_full_workflow_from_inspection(
             structures_csv=standardized_csv,
             target_state_structure=target_structure,
             reference_state_structure=reference_structure,
-            prediction_chain=parse_chains,
+            prediction_chain=prediction_chain,
             target_chain=parse_chains,
             reference_chain=parse_chains,
             regions=_comparison_regions_from_mutation_region(mutation_region),
@@ -1999,7 +2008,7 @@ def _auto_run_full_workflow_from_inspection(
             structures_csv=standardized_csv,
             structure_prediction_evidence_csv=str(collect_structure.get("evidence_csv") or ""),
             structure_state_similarity_evidence_csv=str(compare.get("evidence_csv") or ""),
-            chain_id=parse_chains,
+            chain_id=prediction_chain,
             mutation_window_radius=3,
             min_confidence_score=0.7,
             min_complex_plddt=0.7,
@@ -2020,7 +2029,7 @@ def _auto_run_full_workflow_from_inspection(
             structures_csv=standardized_csv,
             candidates_csv=confidence_csv,
             model_set="esm_if1,protein_mpnn",
-            chain_id=parse_chains,
+            chain_id=prediction_chain,
             top_n=structure_n,
             execute=True,
             timeout_seconds=timeout_seconds,

@@ -14,7 +14,11 @@ The agent evaluates the score distribution and selects a central fraction. The r
 
 ## Structure and quality control
 
-Boltz-2 predicts each retained variant with the target-state structure as a template. The collection stage validates output structures, PAE/PDE availability and completion status. Standardized structures are compared with both supplied states. Confidence, local pLDDT, PAE and target-state similarity are combined in the structure gate.
+The deployment-selected predictor processes each retained variant with the target-state structure as a template. Boltz-2 receives native YAML; AlphaFold3 receives official-dialect JSON with explicit template mappings, MSAs and ligand entities as configured. A run records the actual engine in its manifest, and downstream collection uses that engine's output adapter.
+
+For AF3, all configured seed/sample outputs must contain a sequence-matched mmCIF, full confidences JSON, summary JSON and valid PAE. Missing or malformed samples mark that variant incomplete. Among complete samples without severe clashes, the sample with the highest AF3 ranking score supplies a matched structure/metric pair. Raw ranking score, clash/disorder metrics, sample count, mean pLDDT across samples and its standard deviation remain in evidence tables. The normalized generic confidence is mean designed-chain residue pLDDT divided by 100; it is **not** the AF3 ranking score or numerically equivalent to Boltz confidence. The native files are retained.
+
+The AF3 adapter extracts the designed-chain PAE submatrix using `token_chain_ids`, so ligand tokens cannot shift residue windows. Boltz PAE/PDE use its existing parser. AF3 has no PDE output and no synthetic PDE value is inserted. Standardized PDB structures are compared with both supplied states. Confidence, local pLDDT, PAE and target-state similarity are combined in the structure gate. Study-specific iLID thresholds are not imposed on every protein.
 
 ## Inverse folding and ensemble evidence
 
@@ -27,3 +31,5 @@ The workflow merges state-bias, structural, inverse-folding, ensemble and energy
 ## Resume behavior
 
 Long-running jobs are prepared as manifests and shell commands. If a job is interrupted, inspect `project_manifest.json`, the stage summary and the generated job manifest. Re-run only the incomplete stage or use the checkpoint runner's resume options. Completed outputs are detected and reused where the evidence schema allows it.
+
+AF3 output directories include an input/settings fingerprint. Changed sequences, templates, seeds or sampling settings use a different directory. Rerunning `scripts/run_alphafold3_batch.py --manifest /path/to/structure_prediction_job_manifest.json` validates and skips complete variants, then retries incomplete ones. Use `--collect-only` to rebuild the summary without loading AF3. MCP collection independently rescans native outputs, so an interrupted summary write does not invalidate completed predictions. Failed variants stay visible and are excluded from downstream scoring; complete variants can continue.

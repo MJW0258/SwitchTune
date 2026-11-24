@@ -12,7 +12,7 @@ SwitchTune designs state-specific mutations for conformational-switching protein
 4. Build a saturation single-mutant library only in the selected region.
 5. Run state-specific conformation-bias scoring with ProteinMPNN for ligand-free structures or LigandMPNN when ligands/cofactors are present.
 6. Select moderate-bias variants using an empirical, adaptive central fraction. Do not use a universal score window, fixed threshold or fixed count. A larger valid mutation library should yield a larger retained pool within the configured bounds.
-7. Predict the retained variants with Boltz-2 using the target-state structure as a template. Request full PAE/PDE when supported.
+7. Predict retained variants with the deployment-selected backend (Boltz-2 or AlphaFold3) using the target-state structure as a template. Keep this backend throughout the run. Its adapter generates native inputs and normalizes confidence/PAE outputs. Request full PAE and, for Boltz-2, PDE when supported.
 8. Apply confidence, PAE and target-state similarity quality control.
 9. Score sequence-structure compatibility with ESM-IF1 and ProteinMPNN/LigandMPNN as appropriate, reporting negative log-likelihood (NLL) direction explicitly.
 10. Sample conformational ensembles with BioEmu when enabled.

@@ -1,6 +1,23 @@
 # External tools are optional and disabled until installed locally.
 # Replace every placeholder path with a real installation path.
 tools:
+  alphafold3:
+    enabled: false
+    deployment: "docker"
+    docker_image: "alphafold3"
+    # Use scripts/configure_structure_backend.py or AF3_* environment variables
+    # for machine-specific paths; native deployments also need repo and python.
+    repo: ""
+    python: "python"
+    model_dir: ""
+    db_dir: ""
+    msa_mode: "search"
+    input_template: ""
+    protein_chain_id: "A"
+    seeds: [1]
+    num_samples: 5
+    extra_args: []
+
   boltz2_local:
     enabled: true
     executable: "boltz"

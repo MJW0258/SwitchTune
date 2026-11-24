@@ -31,7 +31,6 @@ python -u "${SWITCHTUNE_HOME}/scripts/run_switchtune_agent_benchmark.py" \
   --prompt_file "${SWITCHTUNE_PROMPT_FILE:-}" \
   --parse_chains "${PARSE_CHAINS:-A}" \
   --first_residue_number "${FIRST_RESIDUE_NUMBER:-1}" \
-  --structure_engine "${SWITCHTUNE_STRUCTURE_ENGINE:-boltz2_local}" \
   --structure_top_n 0 \
   --bioemu_top_n 0 \
   --rosetta_top_n 0 \

@@ -18,6 +18,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from checkpoint_workflow_runner import run_checkpoint_workflow
+from switchtune.structure_backend import configured_engine
 
 
 REPO = Path(os.environ.get("SWITCHTUNE_HOME", REPO_ROOT)).expanduser().resolve()
@@ -391,7 +392,7 @@ def main() -> int:
     parser.add_argument("--target_state_name", default="target_state")
     parser.add_argument("--reference_state_name", default="reference_state")
     parser.add_argument("--parse_chains", default="A")
-    parser.add_argument("--structure_engine", default=os.environ.get("SWITCHTUNE_STRUCTURE_ENGINE", "boltz2_local"))
+    parser.add_argument("--structure_engine", default=configured_engine())
     parser.add_argument("--ligand_codes", default="")
     parser.add_argument("--prompt_path", default=str(DEFAULT_PROMPT_PATH))
     parser.add_argument("--mcp_config", default=os.environ.get("SWITCHTUNE_MCP_CONFIG", str(REPO / "mcp_config.example.yaml")))
@@ -487,7 +488,7 @@ def main() -> int:
         "ESM_IF1_SCORE_SCRIPT",
         "./external/esm/examples/inverse_folding/score_log_likelihoods.py",
     )
-    os.environ.setdefault("SWITCHTUNE_STRUCTURE_ENGINE", "boltz2_local")
+    os.environ["SWITCHTUNE_STRUCTURE_ENGINE"] = args.structure_engine
     os.environ.setdefault("BOLTZ_CACHE", "./models/boltz2")
 
     prompt = PROMPT_TEMPLATE.format(

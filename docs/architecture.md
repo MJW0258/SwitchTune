@@ -37,7 +37,7 @@ Each stage records input paths, command configuration, output paths, candidate c
 
 ## Replaceable components
 
-The workflow does not require a single provider for the LLM or structure backend. Biomni supplies the agent runtime; users choose a supported model source and API endpoint. Boltz-2, LigandMPNN, ESM-IF1, BioEmu and Rosetta are configured independently, so an unavailable optional component can be installed or replaced without changing the workflow state schema.
+The workflow does not require a single provider for the LLM or structure backend. Biomni supplies the agent runtime; users choose a supported model source and API endpoint. The deployment-selected Boltz-2 or AlphaFold3 predictor, LigandMPNN, ESM-IF1, BioEmu and Rosetta are configured independently. Native predictor adapters generate inputs and normalize validated artifacts into the shared structure/evidence tables; later modules use those tables and standardized PDB files. AlphaFold3 runs through its official Docker or native environment without importing JAX into the agent process.
 
 ## Design principles
 

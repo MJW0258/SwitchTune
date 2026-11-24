@@ -15,6 +15,8 @@ from pathlib import Path
 from statistics import mean, median, pstdev
 from typing import Any, Dict, List, Optional, Tuple
 
+from switchtune.structure_backend import af3_settings, deployment_config
+
 _MCP_IMPORT_ERROR = None
 try:
     from mcp.server.fastmcp import FastMCP
@@ -320,6 +322,8 @@ def _required_pae_from_structure_job_manifest(job_manifest: Dict[str, Any]) -> b
     fixtures remain permissive, while every current Boltz-2 job writes
     ``require_pae=true`` into its manifest.
     """
+    if job_manifest.get("engine") == "alphafold3":
+        return True
     boltz = job_manifest.get("boltz2")
     if not isinstance(boltz, dict):
         return False
@@ -4332,10 +4336,15 @@ def _normalize_structure_engine(engine: str) -> str:
         "colabfold": "colabfold",
         "af2": "colabfold",
         "alphafold2": "colabfold",
+        "af3": "alphafold3",
+        "alphafold3": "alphafold3",
+        "alphafold_3": "alphafold3",
+        "alphafold3_local": "alphafold3",
         "boltz": "boltz2_nim",
         "boltz2": "boltz2_nim",
         "boltz_2": "boltz2_nim",
         "boltz2_nim": "boltz2_nim",
+        "boltz2_hosted": "boltz2_nim",
         "boltz_2_nim": "boltz2_nim",
         "nim": "boltz2_nim",
         "boltz2_local": "boltz2_local",
@@ -4347,7 +4356,7 @@ def _normalize_structure_engine(engine: str) -> str:
     }
     if cleaned not in aliases:
         raise ValueError(
-            "Supported structure prediction engines: auto, colabfold/af2, boltz2_nim, boltz2_local."
+            "Supported structure prediction engines: auto, alphafold3/af3, colabfold/af2, boltz2_nim, boltz2_local."
         )
     return aliases[cleaned]
 
@@ -4364,6 +4373,12 @@ def _select_structure_engine_decision(
     cofactor_required: bool,
 ) -> Dict[str, Any]:
     requested = _normalize_structure_engine(engine)
+    pinned = str(os.environ.get("SWITCHTUNE_STRUCTURE_ENGINE") or deployment_config().get("engine") or "").strip()
+    if pinned and _normalize_structure_engine(pinned) != "auto" and requested not in {"auto", _normalize_structure_engine(pinned)}:
+        raise ValueError(
+            f"Structure backend is configured as {pinned}, but {engine} was requested. "
+            "Use the configured backend; change the deployment selection or SWITCHTUNE_STRUCTURE_ENGINE for an intentional override."
+        )
     context = _structure_ligand_context(
         project_name=project_name,
         target_state_structure=target_state_structure,
@@ -4376,22 +4391,18 @@ def _select_structure_engine_decision(
     if requested == "auto":
         config = _load_default_config()
         structure_cfg = config.get("structure_prediction", {}) if isinstance(config.get("structure_prediction", {}), dict) else {}
-        env_engine = str(os.environ.get("SWITCHTUNE_STRUCTURE_ENGINE") or "").strip()
+        env_engine = pinned
         env_normalized = _normalize_structure_engine(env_engine) if env_engine else "auto"
         if env_normalized != "auto":
             recommended = env_normalized
         else:
-            ligand_engine = _normalize_structure_engine(
-                str(structure_cfg.get("ligand_or_cofactor_engine") or "boltz2_local")
-            )
-            ligand_free_engine = _normalize_structure_engine(
-                str(structure_cfg.get("ligand_free_engine") or "boltz2_local")
-            )
-            recommended = ligand_engine if context["ligand_required"] else ligand_free_engine
+            recommended = _normalize_structure_engine(str(structure_cfg.get("default_engine") or "boltz2_local"))
     else:
         recommended = requested
 
-    if recommended == "boltz2_local" and context["ligand_required"]:
+    if recommended == "alphafold3":
+        rationale = "Use the deployment-selected AlphaFold3 backend with its native JSON inputs and confidence outputs."
+    elif recommended == "boltz2_local" and context["ligand_required"]:
         rationale = (
             "Ligand/cofactor/ion context detected or declared; use the locally deployed "
             "Boltz-2 CLI for ligand-aware prediction."
@@ -4429,7 +4440,7 @@ def _select_structure_engine_decision(
         "next_tool": "prepare_structure_prediction_job",
         "agent_instruction": (
             "Use recommended_engine as engine for prepare_structure_prediction_job. "
-            "If recommended_engine is boltz2_nim or boltz2_local, provide ligand_codes or ligand_smiles when known."
+            "Keep the deployment-selected backend. Provide ligand_codes/ligand_smiles, or an AF3 input template for complex chemistry."
         ),
     }
 
@@ -4905,7 +4916,7 @@ def _prepare_target_template(
         "template_format": fmt,
         "warnings": (
             [
-                "ColabFold custom templates are most reliable as mmCIF. A PDB template was supplied; convert to mmCIF if ColabFold rejects it."
+                "A PDB template was supplied; the selected backend adapter converts it to mmCIF where required."
             ]
             if fmt == "pdb"
             else []
@@ -5835,7 +5846,7 @@ def prepare_structure_prediction_job(
 ) -> Dict[str, Any]:
     """Prepare a structure-prediction job for retained SwitchTune variants.
 
-    With `engine="auto"`, the configured Boltz-2 backend is selected for
+    With `engine="auto"`, the deployment-selected backend is used for
     ligand-free and ligand/cofactor/ion-aware projects. The tool writes inputs,
     a job manifest, and a shell script. It does not run the expensive job unless
     `execute=True` is explicitly passed.
@@ -5936,6 +5947,38 @@ def prepare_structure_prediction_job(
             "colabfold_custom_template_path": colabfold_template_path,
         }
         agent_instruction = "Return a final <solution> now. Do not run ColabFold inside the agent call."
+    elif engine_clean == "alphafold3":
+        from switchtune.alphafold3 import prepare_inputs
+
+        settings = af3_settings(_tool_config("alphafold3"))
+        ligands = _boltz2_ligands(
+            ligand_codes=ligand_codes, ligand_smiles=ligand_smiles,
+            ligand_payload_json=ligand_payload_json,
+            detected_ligand_codes=list(engine_decision.get("detected_ligand_codes") or []),
+            include_detected_ligands=bool(boltz_include_detected_ligands),
+        )
+        af3 = prepare_inputs(
+            candidate_map, input_dir / "alphafold3_inputs", prediction_dir, settings,
+            target_template=str(template_info.get("template_path") or "") if template_info.get("enabled") else "",
+            template_chain_id=template_chain_id, ligands=ligands,
+        )
+        af3.update(response_dir=str(outdir / "alphafold3_responses"),
+                   summary_csv=str(outdir / "alphafold3_prediction_summary.csv"))
+        runner_script = Path(__file__).resolve().parents[1] / "scripts/run_alphafold3_batch.py"
+        script_path = outdir / "run_alphafold3_structure_prediction.sh"
+        log_path = outdir / "alphafold3_batch.log"
+        command_text = f"python {_quote_bash(str(runner_script))} --manifest {_quote_bash(str(outdir / 'structure_prediction_job_manifest.json'))}"
+        _write_shell_script(script_path, ["#!/usr/bin/env bash", "set -euo pipefail",
+                                        f"{command_text} 2>&1 | tee {_quote_bash(str(log_path))}"])
+        payload = {
+            "engine": engine_clean, "engine_decision": engine_decision,
+            "candidates_csv": str(Path(candidates_csv).expanduser()), "candidate_count": len(rows),
+            "fasta_path": str(fasta_path), "candidate_map_path": candidate_map_path,
+            "prediction_dir": str(prediction_dir), "run_script": str(script_path),
+            "log_path": str(log_path), "command": command_text, "template_info": template_info,
+            "prediction_summary_csv": af3["summary_csv"], "alphafold3": af3,
+        }
+        agent_instruction = "Run the generated AlphaFold3 batch script, then collect and standardize its validated outputs."
     elif engine_clean == "boltz2_local":
         config = _tool_config("boltz2_local")
         conda_env = str(config.get("conda_env") or "current")
@@ -6334,7 +6377,7 @@ def prepare_structure_prediction_job(
             if completed is not None
             else "timeout"
         )
-        batch_summary_name = (
+        batch_summary_name = "alphafold3_prediction_summary.summary.json" if engine_clean == "alphafold3" else (
             "boltz2_local_prediction_summary.summary.json"
             if engine_clean == "boltz2_local"
             else "boltz2_nim_prediction_summary.summary.json"
@@ -6345,10 +6388,11 @@ def prepare_structure_prediction_job(
             batch_status = str(batch_summary.get("status") or "").strip()
             if batch_status:
                 execute_status = batch_status
-                result["boltz2_batch_summary"] = batch_summary
-                result["boltz2_batch_summary_path"] = str(batch_summary_path)
-                result["boltz2_batch_failure_count"] = batch_summary.get("failure_count")
-                result["boltz2_batch_candidate_count"] = batch_summary.get("candidate_count")
+                prefix = "alphafold3" if engine_clean == "alphafold3" else "boltz2"
+                result[f"{prefix}_batch_summary"] = batch_summary
+                result[f"{prefix}_batch_summary_path"] = str(batch_summary_path)
+                result[f"{prefix}_batch_failure_count"] = batch_summary.get("failure_count")
+                result[f"{prefix}_batch_candidate_count"] = batch_summary.get("candidate_count")
                 if batch_status == "completed_with_failures":
                     result["partial_failure"] = True
         result.update(
@@ -6396,9 +6440,9 @@ def collect_structure_prediction_results(
 ) -> Dict[str, Any]:
     """Scan structure-prediction outputs and build result/evidence tables.
 
-    For Boltz-2 NIM jobs this merges the API summary; for local Boltz-2 jobs
-    it merges the normalized CLI summary and response JSON. Both backends
-    expose the same confidence, PAE, template, and runtime fields downstream.
+    Boltz-2 jobs merge their normalized CLI/API summary and response JSON.
+    AlphaFold3 jobs validate native seed/sample artifacts before normalizing
+    them. All backends expose shared confidence/PAE and template fields.
     """
     pred_dir = Path(prediction_dir).expanduser()
     if not pred_dir.exists():
@@ -6409,6 +6453,17 @@ def collect_structure_prediction_results(
     outdir.mkdir(parents=True, exist_ok=True)
 
     job_manifest, resolved_job_manifest_path = _resolve_structure_job_manifest(outdir, job_manifest_path)
+    is_af3 = job_manifest.get("engine") == "alphafold3"
+    if is_af3:
+        from switchtune.alphafold3 import collect_candidate
+
+        af3 = job_manifest["alphafold3"]
+        # Rebuild from validated artifacts even when a previous runner died
+        # before writing its CSV. Never infer variants from generic model.cif.
+        af3_rows = [collect_candidate(record, af3, Path(af3["response_dir"])) for record in af3["input_records"]]
+        _write_csv_rows(Path(af3["summary_csv"]), af3_rows,
+                        _csv_fieldnames_union(af3_rows, ["variant", "status", "structure_path"]))
+        prediction_summary_csv = af3["summary_csv"]
     if not candidate_map_path and job_manifest.get("candidate_map_path"):
         candidate_map_path = str(job_manifest["candidate_map_path"])
     known_variants = _candidate_map_variants(candidate_map_path)
@@ -6430,7 +6485,7 @@ def collect_structure_prediction_results(
         variant = _variant_id(summary_row)
         summary_by_variant[variant] = summary_row
 
-    structure_files = sorted(
+    structure_files = [] if is_af3 else sorted(
         [path for path in pred_dir.rglob("*") if path.is_file() and path.suffix.lower() in {".pdb", ".cif"}]
     )
     json_files = sorted([path for path in pred_dir.rglob("*.json") if path.is_file()])
@@ -6914,7 +6969,7 @@ def standardize_structure_prediction_results(
 ) -> Dict[str, Any]:
     """Convert/copy predicted structures to downstream-friendly PDB files.
 
-    Boltz-2 NIM commonly returns mmCIF. Many downstream tools in SwitchTune
+    AlphaFold3 and Boltz-2 commonly return mmCIF. Downstream tools in SwitchTune
     (ESM-IF1, ProteinMPNN/LigandMPNN, Rosetta) are more predictable with PDB,
     so this tool creates a standardized PDB table before later modules.
     """
@@ -7179,7 +7234,7 @@ def compare_structure_predictions_to_states(
     evidence_csv = outdir / "structure_state_similarity_evidence.csv"
 
     project_root = Path(os.environ.get("SWITCHTUNE_HOME", Path(__file__).resolve().parents[1])).expanduser().resolve()
-    script = project_root / "scripts" / "compare_boltz_predictions_to_states.py"
+    script = project_root / "scripts" / "compare_predictions_to_states.py"
     if not script.exists():
         raise FileNotFoundError(f"State comparison script not found: {script}")
 
@@ -7296,7 +7351,7 @@ def filter_structure_confidence(
 ) -> Dict[str, Any]:
     """Filter predicted structures before inverse-folding validation.
 
-    The filter combines Boltz-2 response metrics, full PAE when available,
+    The filter combines normalized backend metrics, full PAE when available,
     CIF/PDB B-factor pLDDT, and optional target/reference similarity evidence.
     By default it is a hard gate. When ``enable_agent_rescue_review`` is true,
     candidates that fail only the adaptive PAE ranking gate can be written to a

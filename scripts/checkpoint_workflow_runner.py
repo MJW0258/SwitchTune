@@ -1075,7 +1075,7 @@ def run_checkpoint_workflow(
         if structure_manifest_hint
         else {}
     )
-    boltz_manifest = structure_manifest_data.get("boltz2") if isinstance(structure_manifest_data, dict) else {}
+    boltz_manifest = (structure_manifest_data.get("alphafold3") or structure_manifest_data.get("boltz2")) if isinstance(structure_manifest_data, dict) else {}
     if isinstance(boltz_manifest, dict):
         prediction_chain = str(
             boltz_manifest.get("polymer_chain_id")
@@ -1216,7 +1216,7 @@ def run_checkpoint_workflow(
             "prediction_dir": str(reused_prediction_dir),
             "source_job_manifest": str(reused_job_manifest),
             "source_project": str(reused_job_manifest.parents[2]),
-            "note": "Boltz-2 submission was skipped; existing prediction outputs were rescanned.",
+            "note": "Structure inference was skipped; existing prediction outputs were rescanned with the recorded backend adapter.",
         }
     else:
         structure_engine_decision = select_structure_prediction_engine(
@@ -1245,6 +1245,10 @@ def run_checkpoint_workflow(
         )
         report["structure_preparation"] = structure
 
+    active_structure_manifest = _read_json(Path(str(structure.get("job_manifest_path") or structure_manifest)).expanduser())
+    backend_settings = active_structure_manifest.get("alphafold3") or active_structure_manifest.get("boltz2") or {}
+    prediction_chain = str(backend_settings.get("polymer_chain_id") or prediction_chain)
+
     collect_structure = collect_structure_prediction_results(
         project_name=project_name,
         prediction_dir=str(structure.get("prediction_dir") or ""),
@@ -1267,7 +1271,7 @@ def run_checkpoint_workflow(
             "blocked_no_candidates",
             "structure_prediction",
             "Structure prediction produced no valid structures after the strict PAE gate. "
-            "Inspect structure_prediction_evidence.csv and the Boltz-2 response summary.",
+            "Inspect structure_prediction_evidence.csv and the selected backend's prediction summary.",
             str(collect_structure.get("evidence_csv") or ""),
         )
 
