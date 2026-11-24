@@ -1,3 +1,5 @@
+<!-- Installation and external-model deployment. -->
+
 # Installation and external-model deployment
 
 SwitchTune has a lightweight orchestration layer and separately installed scientific backends. **Select the structure predictor before installing model dependencies.** Install either Boltz-2 or AlphaFold3; both feed the same downstream quality-control and scoring workflow.
