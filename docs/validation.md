@@ -1,3 +1,5 @@
+<!-- Validation coverage and deployment checks. -->
+
 # Validation Summary
 
 SwitchTune has been developed and tested incrementally rather than validated as a single opaque command.
