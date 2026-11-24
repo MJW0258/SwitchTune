@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Run and resume native AlphaFold3 batches.
 """Run/resume official AlphaFold 3 jobs and normalize their outputs."""
 
 from __future__ import annotations
