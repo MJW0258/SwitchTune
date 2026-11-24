@@ -1,3 +1,4 @@
+# AlphaFold3 input and confidence-output adapters.
 """AlphaFold 3 input and output adapters for the official local implementation.
 
 No AF3 code or weights are imported. Native outputs remain available alongside
