@@ -1,3 +1,4 @@
+# External-model paths and execution settings.
 # External tools are optional and disabled until installed locally.
 # Replace every placeholder path with a real installation path.
 tools:
