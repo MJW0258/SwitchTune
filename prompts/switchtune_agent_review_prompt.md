@@ -1,3 +1,5 @@
+<!-- Evidence-based candidate review instructions. -->
+
 # SwitchTune candidate review prompt
 
 Review the completed SwitchTune evidence packet for the current project.
