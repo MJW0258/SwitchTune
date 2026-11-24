@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Test predictor selection and Boltz-2 job setup.
 from __future__ import annotations
 
 import json
