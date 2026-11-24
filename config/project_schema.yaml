@@ -1,3 +1,4 @@
+# Required inputs and natural-language prompt schema.
 required_inputs:
   project_name:
     type: string
