@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Submit Boltz-2 NIM predictions and retrieve outputs.
 from __future__ import annotations
 
 import argparse
