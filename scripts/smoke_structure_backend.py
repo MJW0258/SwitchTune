@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Smoke-test the selected structure predictor.
 """Prepare or execute one WT control with the deployment-selected predictor."""
 # ruff: noqa: E402 -- Support running this file without installing the package.
 
