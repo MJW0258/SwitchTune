@@ -1,3 +1,4 @@
+# Python package metadata and dependencies.
 [project]
 name = "switchtune"
 version = "0.3.0"
