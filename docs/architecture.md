@@ -1,3 +1,5 @@
+<!-- Agent architecture and modular tool integration. -->
+
 # SwitchTune architecture
 
 ## Overview
