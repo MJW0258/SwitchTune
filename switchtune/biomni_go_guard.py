@@ -1,3 +1,4 @@
+# Guard agent execution and checkpoint transitions.
 from __future__ import annotations
 
 import json
