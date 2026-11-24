@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Launch the complete SwitchTune workflow.
 set -euo pipefail
 
 # Minimal launcher. Set the required variables and the API key before running.
