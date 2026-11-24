@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Run natural-language design with Biomni review.
 """Run a formal SwitchTune benchmark through Biomni agent.go().
 
 This is the public-release style benchmark entrypoint. It deliberately starts
