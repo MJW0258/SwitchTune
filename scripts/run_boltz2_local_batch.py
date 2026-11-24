@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Run local Boltz-2 batches and collect results.
 """Run locally deployed Boltz-2 predictions from a SwitchTune manifest.
 
 The local Boltz-2 CLI writes several output files per prediction rather than
