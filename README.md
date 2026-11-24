@@ -1,3 +1,5 @@
+<!-- SwitchTune overview and quick-start guide. -->
+
 <div align="center">
 
 # 🧬 SwitchTune
