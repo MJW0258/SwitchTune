@@ -1,3 +1,4 @@
+# Exclude secrets, model caches and run outputs.
 # Secrets and local configuration
 .env
 .env.*
