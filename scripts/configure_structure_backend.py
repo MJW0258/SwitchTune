@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Choose and configure the structure predictor.
 """Choose a predictor before installing heavyweight model dependencies (stdlib only)."""
 
 from __future__ import annotations
