@@ -1,3 +1,4 @@
+# Test adaptive selection-to-prediction handoff.
 from __future__ import annotations
 
 import csv
