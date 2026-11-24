@@ -1,3 +1,4 @@
+# Extract ProteinMPNN and LigandMPNN state scores.
 from __future__ import annotations
 
 import argparse
