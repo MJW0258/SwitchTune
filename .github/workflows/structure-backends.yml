@@ -1,3 +1,4 @@
+# Structure-predictor compatibility checks.
 name: Structure backend adapters
 
 on: [push, pull_request]
